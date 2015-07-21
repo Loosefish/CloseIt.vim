@@ -4,10 +4,12 @@ endif
 execute "inoremap " . g:CloseItTrigger . " <C-\\><C-o>:call <SID>CloseIt()<CR>"
 
 
-let s:closers = { '(': ')', '{': '}', '[': ']' }
-let s:openersEscaped = { '(': '(', '{': '{', '[': '\[' }
-let s:closersEscaped = { '(': ')', '{': '}', '[': '\]' }
-let s:openPattern = join(values(s:openersEscaped), '\|')
+if exists("g:CloseItPairs")
+	let s:closers = g:CloseItPairs
+else
+	let s:closers = { '(': ')', '{': '}', '[': ']' }
+endif
+let s:openPattern = '\M' . join(keys(s:closers), '\|')
 
 
 function! s:CloseIt() " {{{1
@@ -15,9 +17,9 @@ function! s:CloseIt() " {{{1
 	let startpos = getcurpos()
 
 	while search(s:openPattern, 'Wb') > 0
-		if !s:Closed(startpos[1], startpos[2]) && synIDattr(synID(line("."), col("."), 0), "name") !~? "string"
+		if !s:Closed(startpos[1], startpos[2]) && !s:isString()
 			let closeChar = s:closers[getline(".")[col(".") - 1]]
-			if col('.') + 1 ==# col('$')
+			if col('.') + 1 ==# col('$')	" TODO: and EOL not at start pos
 				let closeChar = 'o' . closeChar
 			endif
 			call winrestview(startview)
@@ -36,7 +38,7 @@ endfunction " 1}}}
 function! s:Closed(beforeline, beforecol) " {{{1
 	let startview = winsaveview()
 	let opener = getline('.')[col('.') - 1]
-	let [mline, mcol] = searchpairpos(s:openersEscaped[opener], '', s:closersEscaped[opener], 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
+	let [mline, mcol] = searchpairpos( '\M' . opener, '', '\M' . s:closers[opener], 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
 	if [mline, mcol] ==# [0, 0]
 		let closed = 0
 	elseif mline ==# a:beforeline
@@ -48,3 +50,7 @@ function! s:Closed(beforeline, beforecol) " {{{1
 	return closed
 endfunction " 1}}}
 
+
+function! s:isString() " {{{1
+	return synIDattr(synID(line("."), col("."), 0), "name") =~? "string"
+endfunction " 1}}}
