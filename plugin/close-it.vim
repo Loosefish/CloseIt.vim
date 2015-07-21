@@ -1,9 +1,14 @@
-inoremap <S-SPACE> <C-\><C-o>:call <SID>CloseIt()<CR>
+if !exists("g:CloseItTrigger")
+	let g:CloseItTrigger = "<S-SPACE>"
+endif
+execute "inoremap " . g:CloseItTrigger . " <C-\\><C-o>:call <SID>CloseIt()<CR>"
+
 
 let s:closers = { '(': ')', '{': '}', '[': ']' }
 let s:openersEscaped = { '(': '(', '{': '{', '[': '\[' }
 let s:closersEscaped = { '(': ')', '{': '}', '[': '\]' }
 let s:openPattern = join(values(s:openersEscaped), '\|')
+
 
 function! s:CloseIt() " {{{1
 	let startview = winsaveview()
@@ -42,3 +47,4 @@ function! s:Closed(beforeline, beforecol) " {{{1
 	call winrestview(startview)
 	return closed
 endfunction " 1}}}
+
