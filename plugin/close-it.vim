@@ -13,16 +13,15 @@ let s:openPattern = '\M' . join(keys(s:closers), '\|')
 
 
 function! s:CloseItAuto() " {{{1 "
+	" Check if cursor is inside a string
 	if col('.') ==# col('$')
 		let inString = s:isStringEx(line('.'), col('.') - 1)
 	else
 		let inString = s:isStringEx(line('.'), col('.'))
 	endif
 	if inString
-		echom "String"
 		call s:CloseItInString()
 	else
-		echom "No string"
 		call s:CloseIt()
 	endif
 endfunction " 1}}}
@@ -34,17 +33,7 @@ function! s:CloseIt() " {{{1
 
 	while search(s:openPattern, 'Wb') > 0
 		if !s:Closed(startpos[1], startpos[2]) && !s:isString()
-			let closeChar = s:closers[getline(".")[col(".") - 1]]
-			if col('.') + 1 ==# col('$')	" TODO: and EOL not at start pos
-				let closeChar = 'o' . closeChar
-			endif
-			call winrestview(startview)
-			if col('.') == col('$') && col('.') != 1
-				execute 'normal! a' . closeChar . '$'
-			else
-				execute 'normal! ha' . closeChar . 'l'
-			endif
-			return
+			return s:insertCloser(startview)
 		endif
 	endwhile
 	call winrestview(startview)
@@ -60,17 +49,7 @@ function! s:CloseItInString() " {{{1
 			break
 		endif
 		if !s:ClosedInString(startpos[1], startpos[2])
-			let closeChar = s:closers[getline(".")[col(".") - 1]]
-			if col('.') + 1 ==# col('$')	" TODO: and EOL not at start pos
-				let closeChar = 'o' . closeChar
-			endif
-			call winrestview(startview)
-			if col('.') == col('$') && col('.') != 1
-				execute 'normal! a' . closeChar . '$'
-			else
-				execute 'normal! ha' . closeChar . 'l'
-			endif
-			return
+			return s:insertCloser(startview)
 		endif
 	endwhile
 	call winrestview(startview)
@@ -109,9 +88,24 @@ function! s:Closed(beforeline, beforecol) " {{{1
 endfunction " 1}}}
 
 
+function! s:insertCloser(startview) " {{{1
+	let closeChar = s:closers[getline(".")[col(".") - 1]]
+	if col('.') + 1 ==# col('$')	" TODO: and EOL not at start pos
+		let closeChar = 'o' . closeChar
+	endif
+	call winrestview(a:startview)
+	if col('.') == col('$') && col('.') != 1
+		execute 'normal! a' . closeChar . '$'
+	else
+		execute 'normal! ha' . closeChar . 'l'
+	endif
+endfunction " 1}}}
+
+
 function! s:isString() " {{{1
 	return synIDattr(synID(line("."), col("."), 0), "name") =~? "string"
 endfunction " 1}}}
+
 
 function! s:isStringEx(l, c) " {{{1
 	return synIDattr(synID(a:l, a:c, 0), "name") =~? "string"
