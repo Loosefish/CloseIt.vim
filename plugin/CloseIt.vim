@@ -3,8 +3,6 @@ if !exists("g:CloseItTrigger")
 	let g:CloseItTrigger = "<S-SPACE>"
 endif
 execute "inoremap " . g:CloseItTrigger . " <C-\\><C-o>:call <SID>CloseItAuto()<CR>"
-
-
 " }}} Configuration "
 
 
@@ -36,7 +34,8 @@ function! s:CloseIt() " {{{1
 	let startview = winsaveview()
 	let startpos = getcurpos()
 
-	while search(s:openPattern, 'Wb') > 0
+	let until = max([0, startview['lnum'] - 1024])
+	while search(s:openPattern, 'Wb', until) > 0
 		if !s:isClosed(startpos[1], startpos[2], 's:isString()') && !s:isString()
 			return s:insertCloser(startview)
 		endif
@@ -64,7 +63,7 @@ endfunction " 1}}}
 function! s:isClosed(beforeline, beforecol, skip) " {{{1
 	let startview = winsaveview()
 	let opener = getline('.')[col('.') - 1]
-	let [mline, mcol] = searchpairpos( '\M' . opener, '', '\M' . s:closers[opener], 'W', a:skip)
+	let [mline, mcol] = searchpairpos('\M' . opener, '', '\M' . s:closers[opener], 'W', a:skip, a:beforeline)
 	if [mline, mcol] ==# [0, 0]
 		let closed = 0
 	elseif mline ==# a:beforeline
@@ -78,15 +77,18 @@ endfunction " 1}}}
 
 
 function! s:insertCloser(startview) " {{{1
+	echom "ins"
 	let closeChar = s:closers[getline(".")[col(".") - 1]]
-	if col('.') + 1 ==# col('$')	" TODO: and EOL not at start pos
-		let closeChar = 'o' . closeChar
+	if col('.') + 1 ==# col('$') && (a:startview['lnum'] !=# line('.') && a:startview['col'] !=# col('$'))
+		let closeChar = "\<CR>" . closeChar
 	endif
 	call winrestview(a:startview)
-	if col('.') == col('$') && col('.') != 1
-		execute 'normal! a' . closeChar . '$'
+	if a:startview['col'] == 0 && col('$') == 1  " Empty line
+		execute 'normal! a' . closeChar . "\<RIGHT>"
+	elseif a:startview['col'] == col('$') - 1  " End of line
+		execute 'normal! a' . closeChar . "\<ESC>$"
 	else
-		execute 'normal! ha' . closeChar . 'l'
+		execute 'normal! i' . closeChar . "\<RIGHT>"
 	endif
 endfunction " 1}}}
 
