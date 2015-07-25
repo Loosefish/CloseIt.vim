@@ -77,14 +77,13 @@ endfunction " 1}}}
 
 
 function! s:insertCloser(startview) " {{{1
-	echom "ins"
 	let closeChar = s:closers[getline(".")[col(".") - 1]]
-	if col('.') + 1 ==# col('$') && (a:startview['lnum'] !=# line('.') && a:startview['col'] !=# col('$'))
+	if col('.') + 1 ==# col('$') && a:startview['lnum'] !=# line('.')
 		let closeChar = "\<CR>" . closeChar
 	endif
 	call winrestview(a:startview)
 	if a:startview['col'] == 0 && col('$') == 1  " Empty line
-		execute 'normal! a' . closeChar . "\<RIGHT>"
+		execute 'normal! a' . closeChar . "\<ESC>$"
 	elseif a:startview['col'] == col('$') - 1  " End of line
 		execute 'normal! a' . closeChar . "\<ESC>$"
 	else
