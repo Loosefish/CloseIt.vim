@@ -25,9 +25,9 @@ function! s:CloseItAuto() " {{{1 "
 		let inString = s:isStringEx(line('.'), col('.'))
 	endif
 	if inString
-		call s:CloseItInString()
+		return s:CloseItInString()
 	else
-		call s:CloseIt()
+		return s:CloseIt()
 	endif
 endfunction " 1}}}
 
@@ -39,10 +39,12 @@ function! s:CloseIt() " {{{1
 	let until = max([0, startview['lnum'] - 1024])
 	while search(s:openPattern, 'Wb', until) > 0
 		if !s:isClosed(startpos[1], startpos[2], 's:isString()') && !s:isString()
-			return s:insertCloser(startview)
+			call s:insertCloser(startview)
+			return 1
 		endif
 	endwhile
 	call winrestview(startview)
+	return 0
 endfunction " 1}}}
 
 
@@ -55,11 +57,30 @@ function! s:CloseItInString() " {{{1
 			break
 		endif
 		if !s:isClosed(startpos[1], startpos[2], '!s:isString()')
-			return s:insertCloser(startview)
+			call s:insertCloser(startview)
+			return 1
 		endif
 	endwhile
+	" no pending opener inside strings - try regular
 	call winrestview(startview)
-	call s:CloseIt()
+
+	if s:CloseIt()
+		" since the opener is not part of a string we remove the inserted char
+		" if it is inside a string
+		let inString = s:isStringEx(line('.'), col('.'))
+
+		if inString
+			if col('.') ==# col('$') - 1
+				normal! x
+			else
+				normal! X
+			endif
+			call winrestview(startview)
+			return 0
+		else
+			return 1
+		endif
+	endif
 endfunction " 1}}}
 
 
