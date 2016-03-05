@@ -3,6 +3,8 @@ if !exists("g:CloseItTrigger")
 	let g:CloseItTrigger = "<S-SPACE>"
 endif
 execute "inoremap " . g:CloseItTrigger . " <C-\\><C-o>:call <SID>CloseItAuto()<CR>"
+
+let s:defaultClosers = { '(': ')', '{': '}', '[': ']' }
 " }}} Configuration "
 
 
@@ -12,7 +14,7 @@ function! s:CloseItAuto() " {{{1 "
 	elseif exists("g:CloseItPairs")
 		let s:closers = g:CloseItPairs
 	else
-		let s:closers = { '(': ')', '{': '}', '[': ']' }
+		let s:closers = s:defaultClosers
 	endif
 	let s:openPattern = '\M' . join(keys(s:closers), '\|')
 
@@ -57,6 +59,7 @@ function! s:CloseItInString() " {{{1
 		endif
 	endwhile
 	call winrestview(startview)
+	call s:CloseIt()
 endfunction " 1}}}
 
 
