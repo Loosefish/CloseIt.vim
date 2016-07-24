@@ -1,5 +1,5 @@
 # CloseIt.vim #
-Smart insertion of closing characters from insert mode.
+Smart, semi-automatic insertion of closing parentheses, braces, etc.
 
 `x = ((3 + 2) * (4 + 9<CURSOR>` *\<CloseIt\>*
 
@@ -21,26 +21,18 @@ int main () {
 }<CURSOR>
 ```
 
-Strings are handled automatically: if you try trigger *CloseIt* while editing a string only opening characters in other strings are considered and vice versa.\
-Note: Support depends on the syntax file for the current file type and works best if the syntax definition differentiates between string delimiters and the actual strings.
+Strings are handled automatically: if you trigger *CloseIt* while editing a string only opening characters in other strings are considered and vice versa.
+
+Note: This can get wonky with multi-char string delimiters (`"""`) and nested delimiters (`"Foo 'bar' baz"`).
+
 ## Configuration ##
-The Default key combination is *shift + space*, you can change it by setting `g:CloseItTrigger`:
+Create an insert mode binding for `<Plug>CloseIt`.
 ```
-let g:CloseItTrigger = "<F5>"
-```
-
-By default the following pairs are recognized:
-| Opener | Closer |
-| ------ | ------ |
-| `(`    | `)`    |
-| `[`    | `]`    |
-| `{`    | `}`    |
-
-Define your own pairs by setting `g:CloseItPairs`:
-```
-let g:CloseItPairs = { '(': ')', '{': '}', '<': '>' }
+imap <S-SPACE> <Plug>CloseIt
 ```
 
-Buffer local pairs are supported as well, just use `b:CloseItPairs`.
-
-Note: If the opening and closing characters are the same (e. g. `"`) the plugin will mistake closing characters for openings.
+CloseIt uses matching pairs defined in `&matchpairs`, usually set by a file type plugin. But you can easily define your own global or buffer local pairs.
+```
+set matchpairs="<:>"
+setlocal matchpairs="^:$"
+```
