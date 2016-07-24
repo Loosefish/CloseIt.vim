@@ -119,7 +119,7 @@ local function find_in_line(line, col, in_string, stack, autoline)
                     -- found opener -> check stack
                     if #stack == 0 then
                         -- stack empty -> done
-                        if autoline and i == 1 then
+                        if autoline and i == 1 and line ~= autoline then
                             return "\" .. open[char]
                         else
                             return open[char]
@@ -149,6 +149,11 @@ end
 
 function find_closer(line, col, autoline)
     setup()
+    if autoline then
+        autoline = line
+    else
+        autoline = nil
+    end
     local in_string = is_string(line, col)
     if col > 1 then
         return find_in_line(line, col - 1, in_string, {}, autoline)
