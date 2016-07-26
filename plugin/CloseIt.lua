@@ -77,8 +77,6 @@ end
 
 
 local function is_string(line, col)
-    local this = char_type(line, col)
-
     if col > 1 then
         local pre = char_type(line, col - 1)
         if pre == OTHER or pre == END then
@@ -86,6 +84,7 @@ local function is_string(line, col)
         elseif pre == STRING then
             return true
         else  -- pre == DELIM
+            local this = char_type(line, col)
             if this == STRING or this == DELIM then
                 return true
             elseif this == END then
@@ -96,7 +95,7 @@ local function is_string(line, col)
         end
     end
 
-    return this == STRING
+    return char_type(line, col) == STRING
 end
 
 
@@ -128,8 +127,8 @@ local function find_in_line(line, col, in_string, stack, autoline)
                         -- matches top -> pop
                         stack[#stack] = nil
                     else
-                        -- no match -> push
-                        stack[#stack + 1] = char
+                        -- no match -> unbalanced expression
+                        return nil
                     end
                 else
                     -- found closer -> push
@@ -155,10 +154,19 @@ function find_closer(line, col, autoline)
         autoline = nil
     end
     local in_string = is_string(line, col)
+
     if col > 1 then
         return find_in_line(line, col - 1, in_string, {}, autoline)
     elseif line > 1 then
         return find_in_line(line - 1, nil, in_string, {}, autoline)
     end
     return nil
+end
+
+
+function measure(line, col, autoline)
+    local start = os.clock()
+    local res = find_closer(line, col, autoline)
+    print(os.clock() - start)
+    return res
 end
