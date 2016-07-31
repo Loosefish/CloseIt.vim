@@ -119,7 +119,7 @@ local function find_in_line(line, col, in_string, stack, autoline)
                     if #stack == 0 then
                         -- stack empty -> done
                         if autoline and i == 1 and line ~= autoline then
-                            return "\" .. open[char]
+                            return "\r" .. open[char]
                         else
                             return open[char]
                         end
