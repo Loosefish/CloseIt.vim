@@ -15,7 +15,7 @@
 --
 -- s|s  -> true +
 -- s|"  -> true +
--- s|x  -> true (ex. bash var in "")
+-- s|x  -> true (eg. bash var in "")
 -- s|_  -> true +
 --
 -- "|s  -> true +
@@ -36,6 +36,7 @@
 local all = "([%(%)%[%]%{%}])"
 local open = {['['] = ']'; ['{'] = '}'; ['('] = ')'}
 local string_pattern = "[sS][tT][rR][iI][nN][gG]"
+local string_delim_pattern = "[qQ][uU][oO][tT][eE]"
 local string_delim = "[\"']"
 
 -- Char types enum
@@ -45,8 +46,9 @@ local END = 2
 local OTHER = 3
 
 
+-- Build search pattern and matching pairs from vim "&matchpairs"
 function setup(args)
-    -- Can we keep buffer local state in lua somehow?
+    -- TODO: Can we keep buffer local state in lua somehow?
     all = "(["
     open = {}
     iter = string.gmatch(vim.eval("&matchpairs"), "(.):(.),?")
@@ -63,13 +65,16 @@ function char_type(line, col)
 
     if syn_name == "" then
         return END
-    end
 
-    if syn_name:find(string_pattern) then
+    elseif syn_name:find(string_pattern) then
         if string.sub(vim.window().buffer[line], col, col):find(string_delim) then
             return DELIM
         end
         return STRING
+
+    -- For Python (maybe guard?)
+    elseif syn_name:find(string_delim_pattern) then
+        return DELIM
     end
 
     return OTHER
@@ -99,6 +104,15 @@ local function is_string(line, col)
 end
 
 
+-- Seach the given line for a pending opener.
+-- Stops if unbalanced pairs are encountered.
+-- Otherwise continues with the previous line.
+--
+-- line: number of current line
+-- col: number of column in line from where to start searching (may be nil)
+-- in_string: if search started inside a string (boolean)
+-- stack: table of encountered closers
+-- autoline: number of starting line (should only be set to get auto newline)
 local function find_in_line(line, col, in_string, stack, autoline)
     local rev = string.reverse(vim.window().buffer[line])
 
@@ -146,6 +160,8 @@ local function find_in_line(line, col, in_string, stack, autoline)
 end
 
 
+-- Returns a closer for the nearest pending opener. If autoline is set and the
+-- pending opener is last in its' line a linebreak will be inserted as well.
 function find_closer(line, col, autoline)
     setup()
     if autoline then
@@ -164,6 +180,7 @@ function find_closer(line, col, autoline)
 end
 
 
+-- For benchmarking.
 function measure(line, col, autoline)
     local start = os.clock()
     local res = find_closer(line, col, autoline)
