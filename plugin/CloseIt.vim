@@ -4,10 +4,6 @@
 " Homepage: https://github.com/Loosefish
 " License: MIT
 
-if !has("lua")
-    echoerr "CloseIt.vim requires Lua (:help +lua)!"
-    finish
-end
 if exists("g:loaded_CloseIt")
     finish
 endif

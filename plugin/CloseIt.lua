@@ -46,12 +46,17 @@ local END = 2
 local OTHER = 3
 
 
+function get_line(line)
+    return vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(),line - 1, line, false)[1]
+end
+
+
 -- Build search pattern and matching pairs from vim "&matchpairs"
 function setup(args)
     -- TODO: Can we keep buffer local state in lua somehow?
     all = "(["
     open = {}
-    iter = string.gmatch(vim.eval("&matchpairs"), "(.):(.),?")
+    iter = string.gmatch(vim.api.nvim_eval("&matchpairs"), "(.):(.),?")
     for o,c in iter do
         all = all .. "%" .. o .. "%" .. c
         open[o] = c
@@ -61,13 +66,13 @@ end
 
 
 function char_type(line, col)
-    local syn_name = vim.eval('synIDattr(synID(' .. line .. ',' .. col .. ', 0), "name")')
+    local syn_name = vim.api.nvim_eval('synIDattr(synID(' .. line .. ',' .. col .. ', 0), "name")')
 
     if syn_name == "" then
         return END
 
     elseif syn_name:find(string_pattern) then
-        if string.sub(vim.window().buffer[line], col, col):find(string_delim) then
+        if string.sub(get_line(line), col, col):find(string_delim) then
             return DELIM
         end
         return STRING
@@ -114,7 +119,7 @@ end
 -- stack: table of encountered closers
 -- autoline: number of starting line (should only be set to get auto newline)
 local function find_in_line(line, col, in_string, stack, autoline)
-    local rev = string.reverse(vim.window().buffer[line])
+    local rev = string.reverse(get_line(line))
 
     if col then
         col = #rev + 1 - col
