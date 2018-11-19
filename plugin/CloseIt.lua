@@ -39,6 +39,10 @@ local string_pattern = "[sS][tT][rR][iI][nN][gG]"
 local string_delim_pattern = "[qQ][uU][oO][tT][eE]"
 local string_delim = "[\"']"
 
+-- For some languages it's better to ignore strings
+local ignore_strings = false
+local blacklist = { sh=true, terraform=true }
+
 -- Char types enum
 local STRING = 0
 local DELIM = 1
@@ -57,6 +61,10 @@ function setup(args)
         open[o] = c
     end
     all = all .. "])"
+
+    if blacklist[vim.eval("&filetype")] then
+        ignore_strings = true
+    end
 end
 
 
@@ -82,7 +90,9 @@ end
 
 
 local function is_string(line, col)
-    if col > 1 then
+    if ignore_strings then
+        return false
+    elseif col > 1 then
         local pre = char_type(line, col - 1)
         if pre == OTHER or pre == END then
             return false
