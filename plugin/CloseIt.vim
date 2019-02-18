@@ -18,7 +18,7 @@ execute 'luafile ' . expand('<sfile>:p:h') . '/CloseIt.lua'
 
 function! s:CloseIt()
     let closer = luaeval('find_closer(' . line('.') . ',' . col('.') . ',true)')
-    if type(closer) == 0
+    if type(closer) == 7
         return ''
     endif
     return closer
